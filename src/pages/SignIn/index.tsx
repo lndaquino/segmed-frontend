@@ -13,24 +13,32 @@ import {
   WarningTitle,
 } from './styles';
 
+interface Metadata {
+  originalWidth: number;
+  originalHeight: number;
+  msg: string;
+}
 interface File {
   id: string;
   url: string;
   status: boolean;
   updated_at: Date;
+  metadata: Metadata;
 }
 
 const SignIn: React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
-  const [apiRunning, setApiRunning] = useState(false);
+  const [apiRunning, setApiRunning] = useState(true);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     async function loadFiles(): Promise<void> {
       try {
         const getFiles = await api.get('/');
         setFiles(getFiles.data);
         setApiRunning(true);
+        setLoading(false);
       } catch (err) {
-        console.log(err);
+        setApiRunning(false);
       }
     }
     loadFiles();
@@ -59,37 +67,81 @@ const SignIn: React.FC = () => {
     [files],
   );
 
+  const getMetadata = useCallback(
+    (e: React.SyntheticEvent<HTMLImageElement, Event>, currentFile: File) => {
+      console.log(currentFile.id);
+      const updatedFiles = files.map(file => {
+        if (file.id !== currentFile.id) {
+          return file;
+        }
+        const metadata = {
+          originalWidth: e.currentTarget.naturalWidth,
+          originalHeight: e.currentTarget.naturalHeight,
+          msg: `${e.currentTarget.naturalWidth}px X ${e.currentTarget.naturalHeight}px`,
+        } as Metadata;
+        const updatedFile = {
+          ...file,
+          metadata,
+        } as File;
+        return updatedFile;
+      });
+      setFiles(updatedFiles);
+    },
+    [files],
+  );
+
   return (
     <>
       {apiRunning ? (
-        <Container>
-          <Content>
-            <Title>
-              <h1>Segmed Image Gallery</h1>
-            </Title>
-            <Main>
-              {files.map(file => (
-                <ImageCard key={file.id}>
-                  {file.status ? (
-                    <AiFillStar style={{ color: 'orange', fontSize: '2em' }} />
-                  ) : (
-                    <AiOutlineStar
-                      style={{ color: 'orange', fontSize: '2em' }}
-                    />
-                  )}
+        <>
+          {loading ? (
+            <ContainerBackground>
+              <Content>
+                <Title>
+                  <h1>Segmed Image Gallery</h1>
+                </Title>
+                <WarningTitle>
+                  <h1>Loading images and metadata...</h1>
+                </WarningTitle>
+              </Content>
+            </ContainerBackground>
+          ) : (
+            <Container>
+              <Content>
+                <Title>
+                  <h1>Segmed Image Gallery</h1>
+                </Title>
+                <Main>
+                  {files.map(file => (
+                    <ImageCard key={file.id}>
+                      {file.status ? (
+                        <AiFillStar
+                          style={{ color: 'orange', fontSize: '2em' }}
+                        />
+                      ) : (
+                        <AiOutlineStar
+                          style={{ color: 'orange', fontSize: '2em' }}
+                        />
+                      )}
 
-                  <Image
-                    alt="galery"
-                    src={file.url}
-                    title={file.status ? 'Click to untag' : 'Click to tag'}
-                    onClick={() => toogleTag(file.id, file.status)}
-                  />
-                  <h1>Metadata</h1>
-                </ImageCard>
-              ))}
-            </Main>
-          </Content>
-        </Container>
+                      <Image
+                        alt="galery"
+                        src={file.url}
+                        title={file.status ? 'Click to untag' : 'Click to tag'}
+                        onLoad={e => getMetadata(e, file)}
+                        onClick={() => toogleTag(file.id, file.status)}
+                      />
+                      <h2>
+                        Original size:{' '}
+                        {file.metadata ? file.metadata.msg : 'loading...'}
+                      </h2>
+                    </ImageCard>
+                  ))}
+                </Main>
+              </Content>
+            </Container>
+          )}
+        </>
       ) : (
         <ContainerBackground>
           <Content>
@@ -98,7 +150,9 @@ const SignIn: React.FC = () => {
             </Title>
 
             <WarningTitle>
-              <h1>Api not running. Start api backend and reload page</h1>
+              <h1 style={{ color: 'red' }}>
+                Api not running. Start api backend and reload page
+              </h1>
             </WarningTitle>
           </Content>
         </ContainerBackground>

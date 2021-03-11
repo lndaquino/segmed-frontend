@@ -89,11 +89,11 @@ export const ImageCard = styled.div`
     border-radius: 5px;
   }
 
-  h1 {
+  h2 {
     position: absolute;
     padding: 5px;
     margin: -55px 5px;
-    font-size: 25px;
+    font-size: 18px;
     background: #5c5c5c;
     color: #ffffff;
     border-radius: 5px;
@@ -103,7 +103,7 @@ export const ImageCard = styled.div`
   }
 
   :hover {
-    h1 {
+    h2 {
       opacity: 0.5;
     }
 
