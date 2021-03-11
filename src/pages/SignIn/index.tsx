@@ -69,7 +69,6 @@ const SignIn: React.FC = () => {
 
   const getMetadata = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement, Event>, currentFile: File) => {
-      console.log(currentFile.id);
       const updatedFiles = files.map(file => {
         if (file.id !== currentFile.id) {
           return file;
